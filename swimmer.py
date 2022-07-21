@@ -20,7 +20,7 @@ class Swimmer:
         self.poseHist = np.zeros((self.lifespan, 4))  # [t, x, y, theta]
         self.poseHist[0, 1:] = pose
 
-    def getPose(self) -> np.ndarray:
+    def get_pose(self) -> np.ndarray:
         """Returns the current pose of the swimmer"""
 
         return self.poseHist[self.life, 1:]
@@ -40,7 +40,10 @@ class Swimmer:
             raise IndexError("Simulation has gone on too long...")
 
         dt = t - self.poseHist[self.life, 0]
-        newPose = self.poseHist[self.life, 1:] + vel * dt
+        if len(vel) == 3:  # vel = [dx, dy, dtheta]
+            newPose = self.poseHist[self.life, 1:] + vel * dt
+        else:  # vel = [dx, dy] -> use vel = [dx, dy, 0]
+            newPose = self.poseHist[self.life, 1:] + np.hstack((vel, 0)) * dt
 
         self.life += 1
         self.poseHist[self.life, 0] = t
@@ -49,7 +52,7 @@ class Swimmer:
     def plot(self, ax: plt.Axes, *args, **kwargs) -> None:
         """
         Plots the trajectory of the swimmer on the given axes
-        
+
         Inputs:
             ax: matplotlib axes object for plotting on
             *args, **kwargs: matplotlib plotting parameters passed

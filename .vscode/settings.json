@@ -1,0 +1,12 @@
+{
+    "python.linting.mypyEnabled": false,
+    "python.linting.enabled": false,
+    "python.linting.pylintEnabled": true,
+    "python.formatting.provider": "black",
+    "editor.formatOnSave": true,
+    "[python]": {
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": true
+        }
+    },
+}
