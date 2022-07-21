@@ -25,13 +25,16 @@ class GyreFlow:
 
         self.flow_func = partial(double_gyre, **kwargs)
 
-    def plot(self, step: float, lims: np.ndarray, ax) -> None:
+    def plot(self, step: float, lims: np.ndarray, ax, *args, **kwargs) -> None:
         """
         Plots a flow-field for the internal flow_func on a single plot.
 
         Inputs:
             step: the discretization of the plotted flow-field.
             lims: 4-long numpy array of plotting limits [xmin, xmax, ymin, ymax]
+            ax: matplotlib axes object for plotting on
+            *args, **kwargs: matplotlib plotting parameters passed
+                             directly along to the plot command
         """
 
         x1s = np.arange(lims[0], lims[1], step)
@@ -40,7 +43,7 @@ class GyreFlow:
         x1mesh, x2mesh = np.meshgrid(x1s, x2s)
         dxs = self.flow_func(np.array((x1mesh, x2mesh)))
 
-        ax.quiver(x1mesh, x2mesh, dxs[0], dxs[1])
+        ax.quiver(x1mesh, x2mesh, dxs[0], dxs[1], *args, **kwargs)
         plt.draw()
 
 

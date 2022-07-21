@@ -46,11 +46,18 @@ class Swimmer:
         self.poseHist[self.life, 0] = t
         self.poseHist[self.life, 1:] = newPose
 
-    def plot(self, ax: plt.Axes) -> None:
-        """Plots the trajectory of the swimmer on the given axes"""
+    def plot(self, ax: plt.Axes, *args, **kwargs) -> None:
+        """
+        Plots the trajectory of the swimmer on the given axes
+        
+        Inputs:
+            ax: matplotlib axes object for plotting on
+            *args, **kwargs: matplotlib plotting parameters passed
+                             directly along to the plot command
+        """
 
         traj = self.poseHist[: self.life + 1, 1:3]
-        ax.plot(traj[:, 0], traj[:, 1], "r-")
+        ax.plot(traj[:, 0], traj[:, 1], *args, **kwargs)
         plt.draw()
 
 
@@ -62,7 +69,7 @@ def main():
     for i in range(9):
         s.update(i + 1, np.array((0, 1, 0)))
 
-    s.plot(ax)
+    s.plot(ax, "r-")
     plt.show()
     pass
 
