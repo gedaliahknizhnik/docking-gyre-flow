@@ -25,7 +25,7 @@ class GyreFlow:
 
         self.flow_func = partial(double_gyre, **kwargs)
 
-    def plot(self, step: float, lims: np.ndarray) -> None:
+    def plot(self, step: float, lims: np.ndarray, ax) -> None:
         """
         Plots a flow-field for the internal flow_func on a single plot.
 
@@ -34,17 +34,13 @@ class GyreFlow:
             lims: 4-long numpy array of plotting limits [xmin, xmax, ymin, ymax]
         """
 
-        # If no plot exists, create it. Otherwise, reuse it.
-        if not hasattr(self, "f"):
-            self.f, self.ax = plt.subplots()
-
         x1s = np.arange(lims[0], lims[1], step)
         x2s = np.arange(lims[2], lims[3], step)
 
         x1mesh, x2mesh = np.meshgrid(x1s, x2s)
         dxs = self.flow_func(np.array((x1mesh, x2mesh)))
 
-        self.ax.quiver(x1mesh, x2mesh, dxs[0], dxs[1])
+        ax.quiver(x1mesh, x2mesh, dxs[0], dxs[1])
         plt.draw()
 
 
@@ -79,9 +75,10 @@ def double_gyre(pts: np.ndarray, A: float, s: float, mu: float) -> np.ndarray:
 
 
 def main():
+    f, ax = plt.subplots()
 
     g = GyreFlow(flow_model=double_gyre, A=1, s=1, mu=1)
-    g.plot(0.1, np.array((-1, 1, -1, 1)))
+    g.plot(0.1, np.array((-1, 1, -1, 1)), ax)
     plt.show()
 
 
