@@ -5,7 +5,12 @@ import flowfield
 
 
 class ApproachController:
+    """
+    Models a controller that drives a mobile boat towards a target boat using the flow.
+    """
+
     def __init__(self, flow_model: flowfield.GyreFlow) -> None:
+        """Creates a controller object by storing the flowfield and setting params"""
 
         # Control params
         self.Kp = 2
@@ -14,9 +19,22 @@ class ApproachController:
         # Flow model
         self.flow_model = flow_model
 
-        pass
-
     def get_control_vel(self, pos: np.ndarray, targ: np.ndarray) -> np.ndarray:
+        """
+        Gets the velocity to apply to the mobile boat. The controller looks like:
+
+            r_des = r_targ + Kp*phase_error
+
+        and the applied velocity is either out or in along the phase direction.
+
+        Inputs:
+            pos: numpy [x, y, theta] pose of the mobile swimmer
+            targ: numpy [x, y, theta] pose of the target swimmer
+
+        Outputs:
+            control_vel: [dx, dy, dtheta] velocity to apply to the mobile boat.
+
+        """
 
         r_mob, theta_mob = self.flow_model.get_state(pos)
         r_targ, theta_targ = self.flow_model.get_state(targ)

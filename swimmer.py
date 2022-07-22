@@ -19,19 +19,22 @@ class Swimmer:
         self.life = 0
         self.lifespan = lifespan
 
-        self.poseHist = np.zeros((self.lifespan, 4))  # [t, x, y, theta]
-        self.poseHist[0, 1:] = pose
+        self.pose_hist = np.zeros((self.lifespan, 4))  # [t, x, y, theta]
+        self.pose_hist[0, 1:] = pose
+
+        self.vel_flow_hist = np.zeros((self.lifespan, 4))  # [t, dx, dy, dtheta]
+        self.vel_comd_hist = np.zeros((self.lifespan, 4))
 
     def get_pose(self) -> np.ndarray:
         """Returns the current pose of the swimmer"""
 
-        return self.poseHist[self.life, 1:]
+        return self.pose_hist[self.life, 1:]
 
     def update(
         self,
         t: float,
         vel: np.ndarray,
-        contVel: Optional[np.ndarray] = np.array((0, 0, 0)),
+        cont_vel: Optional[np.ndarray] = np.array((0, 0, 0)),
     ) -> None:
         """
         Updates the position of the swimmer given a velocity and time.
@@ -40,24 +43,31 @@ class Swimmer:
         Inputs:
             t: time at the update step
             vel: numpy 2D velocity [xdot, ydot, thetadot]
-            contVel: optional velocity imparted by a controller [xdot, ydot, thetadot]
+            cont_vel: optional velocity imparted by a controller [xdot, ydot, thetadot]
 
         """
 
         if self.life >= self.lifespan - 1:
             raise IndexError("Simulation has gone on too long...")
 
-        dt = t - self.poseHist[self.life, 0]
-
         # If vel = [dx, dy] -> use vel = [dx, dy, 0]
         if len(vel) == 2:
             vel = np.hstack((vel, 0))
 
-        newPose = self.poseHist[self.life, 1:] + (vel + contVel) * dt
+        # Save velocities
+        self.vel_flow_hist[self.life, 0] = t
+        self.vel_flow_hist[self.life, 1:] = vel
+        self.vel_comd_hist[self.life, 0] = t
+        self.vel_comd_hist[self.life, 1:] = cont_vel
+
+        # Time difference
+        dt = t - self.pose_hist[self.life, 0]
+
+        newPose = self.pose_hist[self.life, 1:] + (vel + cont_vel) * dt
 
         self.life += 1
-        self.poseHist[self.life, 0] = t
-        self.poseHist[self.life, 1:] = newPose
+        self.pose_hist[self.life, 0] = t
+        self.pose_hist[self.life, 1:] = newPose
 
     def plot(self, ax: plt.Axes, *args, **kwargs) -> None:
         """
@@ -69,7 +79,7 @@ class Swimmer:
                              directly along to the plot command
         """
 
-        traj = self.poseHist[: self.life + 1, 1:3]
+        traj = self.pose_hist[: self.life + 1, 1:3]
         ax.plot(traj[:, 0], traj[:, 1], *args, **kwargs)
         plt.draw()
 

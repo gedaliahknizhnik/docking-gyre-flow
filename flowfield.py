@@ -48,7 +48,18 @@ class GyreFlow:
         plt.draw()
 
     def get_state(self, pos: np.ndarray) -> Tuple[float, float]:
+        """
+        Gets the state (r, theta) for a position in the given flow,
+        assuming it is centered at 0.
 
+        Inputs:
+            pos: numpy array [x,y,theta]
+
+        Outputs:
+            r: radius from center
+            theta: phase angle in flow
+
+        """
         r = np.linalg.norm(pos[0:2])
         theta = np.arctan2(pos[1], pos[0])
 
