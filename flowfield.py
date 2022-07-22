@@ -1,4 +1,5 @@
 from functools import partial
+from typing import Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -45,6 +46,13 @@ class GyreFlow:
 
         ax.quiver(x1mesh, x2mesh, dxs[0], dxs[1], *args, **kwargs)
         plt.draw()
+
+    def get_state(self, pos: np.ndarray) -> Tuple[float, float]:
+
+        r = np.linalg.norm(pos[0:2])
+        theta = np.arctan2(pos[1], pos[0])
+
+        return r, theta
 
 
 def double_gyre(pts: np.ndarray, A: float, s: float, mu: float) -> np.ndarray:

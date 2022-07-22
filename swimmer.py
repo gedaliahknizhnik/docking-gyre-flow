@@ -1,3 +1,5 @@
+from typing import Optional
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -25,7 +27,12 @@ class Swimmer:
 
         return self.poseHist[self.life, 1:]
 
-    def update(self, t: float, vel: np.ndarray) -> None:
+    def update(
+        self,
+        t: float,
+        vel: np.ndarray,
+        contVel: Optional[np.ndarray] = np.array((0, 0, 0)),
+    ) -> None:
         """
         Updates the position of the swimmer given a velocity and time.
             Assumes given velocity applied from the last time to the given time.
@@ -33,6 +40,7 @@ class Swimmer:
         Inputs:
             t: time at the update step
             vel: numpy 2D velocity [xdot, ydot, thetadot]
+            contVel: optional velocity imparted by a controller [xdot, ydot, thetadot]
 
         """
 
@@ -40,10 +48,12 @@ class Swimmer:
             raise IndexError("Simulation has gone on too long...")
 
         dt = t - self.poseHist[self.life, 0]
-        if len(vel) == 3:  # vel = [dx, dy, dtheta]
-            newPose = self.poseHist[self.life, 1:] + vel * dt
-        else:  # vel = [dx, dy] -> use vel = [dx, dy, 0]
-            newPose = self.poseHist[self.life, 1:] + np.hstack((vel, 0)) * dt
+
+        # If vel = [dx, dy] -> use vel = [dx, dy, 0]
+        if len(vel) == 2:
+            vel = np.hstack((vel, 0))
+
+        newPose = self.poseHist[self.life, 1:] + (vel + contVel) * dt
 
         self.life += 1
         self.poseHist[self.life, 0] = t
