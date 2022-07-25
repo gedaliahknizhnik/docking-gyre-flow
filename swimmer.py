@@ -82,6 +82,23 @@ class Swimmer:
         traj = self.pose_hist[: self.life + 1, 1:3]
         ax.plot(traj[:, 0], traj[:, 1], *args, **kwargs)
         plt.draw()
+        
+    def plotPhase(self, ax: plt.Axes, *args, **kwargs) -> None:
+        """
+        Plots the phase of the swimmer on the given axes
+
+        Inputs:
+            ax: matplotlib axes object for plotting on
+            *args, **kwargs: matplotlib plotting parameters passed
+                             directly along to the plot command
+        """
+
+        ts = self.pose_hist[: self.life + 1, 0]
+        traj = self.pose_hist[: self.life + 1, 1:3]
+        phases = np.arctan2(traj[:,1], traj[:,0])
+        
+        ax.plot(ts, phases, *args, **kwargs)
+        plt.draw()
 
 
 def main():

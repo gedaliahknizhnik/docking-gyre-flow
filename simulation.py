@@ -3,6 +3,7 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 
+import animate
 from controller import ApproachController
 from flowfield import GyreFlow, single_vortex
 from swimmer import Swimmer
@@ -11,13 +12,13 @@ from swimmer import Swimmer
 def main():
 
     # Simulation Parameters
-    TOTAL_TIME = 30
+    TOTAL_TIME = 10
     TIMESTEP = 0.01
     INITIAL_POS_MODBOAT = np.array((0.5, 0, 0))
     INITIAL_POS_STRUCTURE = np.array((0, 0.5, 0))
     # Flow field parameter
     FLOW_MODEL = single_vortex
-    FLOW_PARAMS = {"Omega": 1, "mu": 0.1}
+    FLOW_PARAMS = {"Omega": 1, "mu": 0.01}
 
     # Plotting Parameters
     LIMITS = np.array((-1, 1, -1, 1))
@@ -45,11 +46,26 @@ def main():
         boat.update(t, vel_modboat, vel_control)
         strc.update(t, vel_structure)
 
+        input()
+
     # Plot results
-    fig, ax = plt.subplots()
-    flow.plot(PLOT_STEP, LIMITS, ax)
-    boat.plot(ax)
-    strc.plot(ax, "g")
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    flow.plot(PLOT_STEP, LIMITS, ax1)
+    boat.plot(ax1)
+    strc.plot(ax1, "g")
+    ax1.set_xlabel("$x$ [m]")
+    ax1.set_ylabel("$y$ [m]")
+    ax1.set_aspect("equal")
+
+    plt.show(block=False)
+
+    boat.plotPhase(ax2)
+    strc.plotPhase(ax2, "g")
+    ax2.set_xlabel("$t$ [s]")
+    ax2.set_ylabel("$\\theta$ [rad]")
+    plt.show(block=False)
+
+    # animate.animate_simulation(flow, [boat, strc], LIMITS)
     plt.show()
 
 
