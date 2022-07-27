@@ -90,6 +90,6 @@ def animate_simulation(
         f.canvas.draw()
         f.canvas.flush_events()
 
-        ii += 1
+        ii += 4
 
     pass

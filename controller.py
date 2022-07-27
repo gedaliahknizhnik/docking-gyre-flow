@@ -44,6 +44,10 @@ class ApproachController:
         r_des = r_targ + self.Kp * err
         dir = 1 if r_des > r_mob else -1
 
+        # print(f"{theta_mob: 0.3} {theta_targ: 0.3} {err:0.3}, {r_des:0.3}")
+        # print(f"{dir} {r_des: 0.3} {r_mob: 0.3}")
+        # print()
+
         control_vel = (
             dir
             * self.vel_from_thrusters

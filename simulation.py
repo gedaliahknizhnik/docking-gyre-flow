@@ -1,24 +1,25 @@
 import time
+from functools import partial
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 import animate
 from controller import ApproachController
-from flowfield import GyreFlow, single_vortex
+from flowfield import GyreFlow, rankine_velocity, single_vortex
 from swimmer import Swimmer
 
 
 def main():
 
     # Simulation Parameters
-    TOTAL_TIME = 10
+    TOTAL_TIME = 180
     TIMESTEP = 0.01
     INITIAL_POS_MODBOAT = np.array((0.5, 0, 0))
     INITIAL_POS_STRUCTURE = np.array((0, 0.5, 0))
     # Flow field parameter
     FLOW_MODEL = single_vortex
-    FLOW_PARAMS = {"Omega": 1, "mu": 0.01}
+    FLOW_PARAMS = {"Omega": partial(rankine_velocity, Gamma=0.1, a=0.05), "mu": 0.01}
 
     # Plotting Parameters
     LIMITS = np.array((-1, 1, -1, 1))
@@ -45,8 +46,6 @@ def main():
 
         boat.update(t, vel_modboat, vel_control)
         strc.update(t, vel_structure)
-
-        input()
 
     # Plot results
     fig, (ax1, ax2) = plt.subplots(1, 2)
