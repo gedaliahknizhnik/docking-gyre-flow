@@ -77,27 +77,23 @@ class ApproachController:
         return control_vel
 
 
-def evaluate_convergence(swimmer1: swimmer.Swimmer, swimmer2: swimmer.Swimmer) -> bool:
+def evaluate_convergence(
+    swimmer1: swimmer.Swimmer, swimmer2: swimmer.Swimmer, time_step: float
+) -> bool:
 
     time_to_convergence = 2  # [s]
     convergence_threshold = 0.01  # [m]
 
-    # Find the index of time_to_convergence ago (last one where this is true)
-    inds = np.where(
-        swimmer1.pose_hist[: swimmer1.life, 0]
-        - (swimmer1.pose_hist[swimmer1.life, 0] - time_to_convergence)
-        <= 0
-    )[0]
+    inds_to_look = int(time_to_convergence / time_step)
 
-    # If there is no such index - not enough time has passed yet.
-    if len(inds) == 0:
+    # If not enough time has passed - false by definition
+    if swimmer1.life <= inds_to_look:
         return False
 
     # Evaluate the average distance over the last time_to_convergence seconds
-    convergence_ind = inds[-1]
     pose_diff = (
-        swimmer1.pose_hist[convergence_ind : swimmer1.life, 1:3]
-        - swimmer2.pose_hist[convergence_ind : swimmer2.life, 1:3]
+        swimmer1.pose_hist[swimmer1.life - inds_to_look : swimmer1.life, 1:3]
+        - swimmer2.pose_hist[swimmer2.life - inds_to_look : swimmer2.life, 1:3]
     )
     avg_distance = np.mean(np.linalg.norm(pose_diff, axis=1))
 

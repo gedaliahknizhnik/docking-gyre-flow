@@ -99,7 +99,7 @@ def double_gyre(pts: np.ndarray, A: float, s: float, mu: float) -> np.ndarray:
     dx1s = -np.pi * A * np.sin(factor1) * np.cos(factor2) - mu * x1s
     dx2s = np.pi * A * np.cos(factor1) * np.sin(factor2) - mu * x2s
 
-    dxs = np.array((dx1s, dx2s))
+    dxs = np.array((dx1s, dx2s, 0 * dx1s))
 
     return dxs
 
@@ -126,7 +126,7 @@ def single_vortex(pts: np.ndarray, Omega: callable, mu: float) -> np.ndarray:
     dx1s = -omega * x2s - mu * x1s
     dx2s = omega * x1s - mu * x2s
 
-    dxs = np.array((dx1s, dx2s))
+    dxs = np.array((dx1s, dx2s, 0 * dx1s))
 
     return dxs
 
