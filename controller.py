@@ -31,7 +31,7 @@ class ApproachController:
         """Creates a controller object by storing the flowfield and setting params"""
 
         # Control params
-        self.Kp = 0.5
+        self.Kp = 0.25
         self.vel_from_thrusters = 0.01
 
         # Flow model
@@ -59,13 +59,9 @@ class ApproachController:
         r_mob, theta_mob = self.flow_model.get_state(pos)
         r_targ, theta_targ = self.flow_model.get_state(targ)
 
-        err = (
-            anglefunctions.wrap_to_pi(theta_targ - theta_mob)
-            * self.flowOri.value
-            * self.flowDir.value
-        )
+        err = anglefunctions.wrap_to_pi(theta_targ - theta_mob) * self.flowOri.value
 
-        r_des = r_targ + self.Kp * err
+        r_des = r_targ + self.Kp * err * self.flowDir.value
         dir = 1 if r_des > r_mob else -1
 
         # print(f"{theta_mob=: 0.3} {theta_targ=: 0.3} {err=:0.3}")

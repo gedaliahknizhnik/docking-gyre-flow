@@ -3,6 +3,8 @@ from typing import Optional
 import matplotlib.pyplot as plt
 import numpy as np
 
+from flowfield import GyreFlow
+
 
 class Swimmer:
     """Defines a point-mass swimmer with 2D position and orientation"""
@@ -93,11 +95,32 @@ class Swimmer:
                              directly along to the plot command
         """
 
+        flow_model: GyreFlow = kwargs.pop("flow_model")
+        
         ts = self.pose_hist[: self.life + 1, 0]
         traj = self.pose_hist[: self.life + 1, 1:3]
-        phases = np.arctan2(traj[:, 1], traj[:, 0])
+        _, phases = flow_model.get_state(traj)
 
         ax.plot(ts, phases, *args, **kwargs)
+        plt.draw()
+        
+    def plotRadii(self, ax: plt.Axes, *args, **kwargs) -> None:
+        """
+        Plots the radius of the swimmer on the given axes
+
+        Inputs:
+            ax: matplotlib axes object for plotting on
+            *args, **kwargs: matplotlib plotting parameters passed
+                             directly along to the plot command
+        """
+
+        flow_model: GyreFlow = kwargs.pop("flow_model")
+        
+        ts = self.pose_hist[: self.life + 1, 0]
+        traj = self.pose_hist[: self.life + 1, 1:3]
+        rs, _ = flow_model.get_state(traj)
+
+        ax.plot(ts, rs, *args, **kwargs)
         plt.draw()
 
 

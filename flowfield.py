@@ -24,6 +24,10 @@ class GyreFlow:
 
         """
 
+        # Pull the center out of the kwargs dictionary
+        self.center = kwargs.pop("center", np.array((0, 0)))
+
+        # All other kwargs go to flow function
         self.flow_func = partial(flow_model, **kwargs)
 
     def plot(self, step: float, lims: np.ndarray, ax, *args, **kwargs) -> None:
@@ -49,21 +53,25 @@ class GyreFlow:
 
     def get_state(self, pos: np.ndarray) -> Tuple[float, float]:
         """
-        Gets the state (r, theta) for a position in the given flow,
+        Gets the state (r, theta) for positions in the given flow,
         assuming it is centered at 0.
 
         Inputs:
-            pos: numpy array [x,y,theta]
+            pos: numpy array [x,y,theta] or N x [x,y,theta]
 
         Outputs:
-            r: radius from center
-            theta: phase angle in flow
+            r: radii from center
+            theta: phase angles in flow
 
         """
-        r = np.linalg.norm(pos[0:2])
-        theta = np.arctan2(pos[1], pos[0])
 
-        return r, theta
+        pos = pos.reshape(-1, 2)
+
+        pos_from_center = pos[:, 0:2] - self.center
+        r = np.linalg.norm(pos_from_center, axis=1)
+        theta = np.arctan2(pos_from_center[:, 1], pos_from_center[:, 0])
+
+        return np.squeeze(r), np.squeeze(theta)
 
 
 def double_gyre(pts: np.ndarray, A: float, s: float, mu: float) -> np.ndarray:
@@ -137,8 +145,18 @@ def rankine_velocity(
 def main():
     f, ax = plt.subplots()
 
-    g = GyreFlow(flow_model=single_vortex, Omega=1, mu=0.1)
-    g.plot(0.1, np.array((-1, 1, -1, 1)), ax)
+    g = GyreFlow(flow_model=double_gyre, A=1, s=5, mu=0.001)
+    g.plot(0.1, np.array((0, 5, 0, 5)), ax)
+    plt.show()
+
+    xs = np.arange(0, 5, 0.1).reshape(-1, 1)
+    ys = 0 * xs
+
+    dx1s, dx2s = g.flow_func([xs, ys])
+    vels = np.sqrt(dx1s**2 + dx2s**2)
+
+    f, ax = plt.subplots()
+    plt.plot(xs, vels)
     plt.show()
 
 
