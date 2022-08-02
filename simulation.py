@@ -1,3 +1,4 @@
+import pickle
 import random
 import time
 from dataclasses import dataclass
@@ -8,7 +9,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import animate
-import controller
 from controller import ApproachController, FlowDirection, FlowOrientation
 from flowfield import GyreFlow, double_gyre, rankine_velocity, single_vortex
 from swimmer import Swimmer
@@ -76,7 +76,7 @@ def main():
     # INITIAL_POS_STRUCTURE = np.array((0.6, 0.5, 0))
 
     # sim_results = run_simulation(sim_params, INITIAL_POS_MODBOAT, INITIAL_POS_STRUCTURE)
-    # # plot_result(sim_results, sim_params)
+    # # # plot_result(sim_results, sim_params)
 
 
 def run_simulation_many_single_gyre():
@@ -85,7 +85,7 @@ def run_simulation_many_single_gyre():
     # Simulation Parameters
     TOTAL_TIME_S = 1000  # [s]
     TIMESTEP_S = 0.01
-    ITERS = 300
+    ITERS = 500
 
     # Plotting Parameters
     LIMITS = np.array((-1, 1, -1, 1))
@@ -106,6 +106,8 @@ def run_simulation_many_single_gyre():
 
     sim_results = []
     sim_outputs = np.zeros((ITERS, 2))
+
+    time_start = time.perf_counter()
 
     random.seed(5)
     for ii in range(1, ITERS + 1):
@@ -129,9 +131,12 @@ def run_simulation_many_single_gyre():
         sim_outputs[ii - 1] = [sim_result.success, sim_result.success_time]
         print(f"convergence: {sim_result.success} in {sim_result.success_time:.2f} s")
 
-    print("Done")
+    print(f"Done. Took {time.perf_counter() - time_start:0.2f} s")
 
-    pass
+    with open("single_gyre_sim_data.pickle", "wb") as f:
+        pickle.dump(sim_results, f)
+
+    print("Data pickled.")
 
 
 def run_simulation(
@@ -145,7 +150,9 @@ def run_simulation(
     boat = Swimmer(initial_modboat_pos, iters)
     strc = Swimmer(initial_structure_pos, iters)
     flow = GyreFlow(flow_model=sim_params.flow_model, **sim_params.flow_params)
-    cont = ApproachController(flow, sim_params.flow_ori, sim_params.flow_dir)
+    cont = ApproachController(
+        flow, sim_params.flow_ori, sim_params.flow_dir, sim_params.timestep_s
+    )
 
     result = False
 
@@ -164,7 +171,7 @@ def run_simulation(
         boat.update(t, vel_modboat, vel_control)
         strc.update(t, vel_structure)
 
-        if controller.evaluate_convergence(boat, strc, sim_params.timestep_s):
+        if cont.evaluate_convergence():
             result = True
             break
 

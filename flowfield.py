@@ -65,13 +65,17 @@ class GyreFlow:
 
         """
 
-        pos = pos.reshape(-1, 2)
+        if len(pos.shape) == 1:
+            pos_from_center = pos[0:2] - self.center
+            r = np.sqrt(pos_from_center[0] ** 2 + pos_from_center[1] ** 2)
+            theta = np.arctan2(pos_from_center[1], pos_from_center[0])
+        else:
+            pos_from_center = pos[:, 0:2] - self.center
+            # r = np.sqrt(pos_from_center[:, 0] ** 2 + pos_from_center[:, 1] ** 2)
+            r = np.squeeze(np.linalg.norm(pos_from_center, axis=1))
+            theta = np.squeeze(np.arctan2(pos_from_center[:, 1], pos_from_center[:, 0]))
 
-        pos_from_center = pos[:, 0:2] - self.center
-        r = np.linalg.norm(pos_from_center, axis=1)
-        theta = np.arctan2(pos_from_center[:, 1], pos_from_center[:, 0])
-
-        return np.squeeze(r), np.squeeze(theta)
+        return r, theta
 
 
 def double_gyre(pts: np.ndarray, A: float, s: float, mu: float) -> np.ndarray:

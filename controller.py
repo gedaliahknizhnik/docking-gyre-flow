@@ -22,11 +22,15 @@ class ApproachController:
     Models a controller that drives a mobile boat towards a target boat using the flow.
     """
 
+    time_to_convergence = 2  # [s]
+    convergence_threshold = 0.01  # [m]
+
     def __init__(
         self,
         flow_model: flowfield.GyreFlow,
-        flowOri: FlowOrientation,
-        flowDir: FlowDirection,
+        flow_ori: FlowOrientation,
+        flow_dir: FlowDirection,
+        time_step: float,
     ) -> None:
         """Creates a controller object by storing the flowfield and setting params"""
 
@@ -36,8 +40,14 @@ class ApproachController:
 
         # Flow model
         self.flow_model = flow_model
-        self.flowOri = flowOri
-        self.flowDir = flowDir
+        self.flow_ori = flow_ori
+        self.flow_dir = flow_dir
+
+        # Data to store
+        self.convergence_count = 0
+        self.convergence_count_threshold = self.time_to_convergence / time_step
+        self.r_diff = np.inf
+        self.theta_diff = np.inf
 
     def get_control_vel(self, pos: np.ndarray, targ: np.ndarray) -> np.ndarray:
         """
@@ -59,9 +69,9 @@ class ApproachController:
         r_mob, theta_mob = self.flow_model.get_state(pos)
         r_targ, theta_targ = self.flow_model.get_state(targ)
 
-        err = anglefunctions.wrap_to_pi(theta_targ - theta_mob) * self.flowOri.value
+        err = anglefunctions.wrap_to_pi(theta_targ - theta_mob) * self.flow_ori.value
 
-        r_des = r_targ + self.Kp * err * self.flowDir.value
+        r_des = r_targ + self.Kp * err * self.flow_dir.value
         dir = 1 if r_des > r_mob else -1
 
         # print(f"{theta_mob=: 0.3} {theta_targ=: 0.3} {err=:0.3}")
@@ -74,29 +84,19 @@ class ApproachController:
             * np.array((np.cos(theta_mob), np.sin(theta_mob), 0))
         )
 
+        # Store data
+        self.r_diff = r_targ - r_mob
+        self.theta_diff = err
+
         return control_vel
 
+    def evaluate_convergence(self) -> bool:
 
-def evaluate_convergence(
-    swimmer1: swimmer.Swimmer, swimmer2: swimmer.Swimmer, time_step: float
-) -> bool:
+        total_err = np.sqrt(self.r_diff**2 + self.theta_diff**2)
 
-    time_to_convergence = 2  # [s]
-    convergence_threshold = 0.01  # [m]
+        if total_err <= self.convergence_threshold:
+            self.convergence_count += 1
+        else:
+            self.convergence_count = 0
 
-    inds_to_look = int(time_to_convergence / time_step)
-
-    # If not enough time has passed - false by definition
-    if swimmer1.life <= inds_to_look:
-        return False
-
-    # Evaluate the average distance over the last time_to_convergence seconds
-    pose_diff = (
-        swimmer1.pose_hist[swimmer1.life - inds_to_look : swimmer1.life, 1:3]
-        - swimmer2.pose_hist[swimmer2.life - inds_to_look : swimmer2.life, 1:3]
-    )
-    avg_distance = np.mean(np.linalg.norm(pose_diff, axis=1))
-
-    return avg_distance <= convergence_threshold
-
-    pass
+        return self.convergence_count >= self.convergence_count_threshold
