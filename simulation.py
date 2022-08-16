@@ -4,6 +4,8 @@ import time
 from dataclasses import dataclass
 from functools import partial
 from msilib.schema import Control
+from multiprocessing import Pool
+from typing import Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -30,6 +32,16 @@ class SimulationParams:
 
 
 @dataclass
+class SimulationProblem:
+    """Class for storing complete simulation problem"""
+
+    simulation_params: SimulationParams
+    modboat_start_pos: np.ndarray
+    struct_start_pos: np.ndarray
+    id_number: int
+
+
+@dataclass
 class SimulationOutput:
     """Class for storing simulation results"""
 
@@ -38,45 +50,52 @@ class SimulationOutput:
     flow_model: GyreFlow
     success: bool
     success_time: float
+    id_number: int
 
 
 def main():
 
-    run_simulation_many_single_gyre()
+    # run_simulation_many_single_gyre()
 
-    # # Simulation Parameters
-    # TOTAL_TIME_S = 300  # [s]
-    # TIMESTEP_S = 0.01
-    # # GYRE_CENTER = np.array((2.5, 2.5))
+    # return
 
-    # # Plotting Parameters
-    # LIMITS = np.array((-1, 1, -1, 1))
-    # # LIMITS = np.array((0, 5, 0, 5))
-    # PLOT_STEP = 0.1
+    # Simulation Parameters
+    TOTAL_TIME_S = 300  # [s]
+    TIMESTEP_S = 0.01
+    # GYRE_CENTER = np.array((2.5, 2.5))
 
-    # # Flow field parameter
+    # Plotting Parameters
+    LIMITS = np.array((-1, 1, -1, 1))
+    # LIMITS = np.array((0, 5, 0, 5))
+    PLOT_STEP = 0.1
+
+    # Flow field parameter
+    FLOW_MODEL, FLOW_DIR, FLOW_ORI, FLOW_PARAMS = (
+        single_vortex,
+        FlowDirection.IN,
+        FlowOrientation.CCW,
+        {"Omega": partial(rankine_velocity, Gamma=0.1, a=0.05), "mu": 0.001},
+    )
     # FLOW_MODEL, FLOW_DIR, FLOW_ORI, FLOW_PARAMS = (
-    #     single_vortex,
+    #     double_gyre,
     #     FlowDirection.IN,
-    #     FlowOrientation.CCW,
-    #     {"Omega": partial(rankine_velocity, Gamma=0.1, a=0.05), "mu": 0.001},
-    # )
-    # # FLOW_MODEL, FLOW_DIR, FLOW_ORI, FLOW_PARAMS = (
-    # #     double_gyre,
-    # #     FlowDirection.IN,
-    # #     FlowOrientation.CW,
-    # #     {"A": 1, "s": 5, "mu": 0.001, "center": GYRE_CENTER},
-    # # )
-
-    # sim_params = SimulationParams(
-    #     TOTAL_TIME_S, TIMESTEP_S, FLOW_MODEL, FLOW_DIR, FLOW_ORI, FLOW_PARAMS
+    #     FlowOrientation.CW,
+    #     {"A": 1, "s": 5, "mu": 0.001, "center": GYRE_CENTER},
     # )
 
-    # INITIAL_POS_MODBOAT = np.array((0.5, 0.5, 0))
-    # INITIAL_POS_STRUCTURE = np.array((0.6, 0.5, 0))
+    sim_params = SimulationParams(
+        TOTAL_TIME_S, TIMESTEP_S, FLOW_MODEL, FLOW_DIR, FLOW_ORI, FLOW_PARAMS
+    )
 
-    # sim_results = run_simulation(sim_params, INITIAL_POS_MODBOAT, INITIAL_POS_STRUCTURE)
-    # # # plot_result(sim_results, sim_params)
+    INITIAL_POS_MODBOAT = np.array((0.5, 0.5, 0))
+    INITIAL_POS_STRUCTURE = np.array((0.6, -0.5, 0))
+
+    sim_problem = SimulationProblem(
+        sim_params, INITIAL_POS_MODBOAT, INITIAL_POS_STRUCTURE, 0
+    )
+
+    sim_results, duration = run_simulation(sim_problem)
+    plot_result(sim_results, sim_params)
 
 
 def run_simulation_many_single_gyre():
@@ -104,14 +123,11 @@ def run_simulation_many_single_gyre():
         TOTAL_TIME_S, TIMESTEP_S, FLOW_MODEL, FLOW_DIR, FLOW_ORI, FLOW_PARAMS
     )
 
-    sim_results = []
-    sim_outputs = np.zeros((ITERS, 2))
-
-    time_start = time.perf_counter()
-
+    # Assemble problems
+    print("Assembling simulations...")
+    sim_problems = []
     random.seed(5)
     for ii in range(1, ITERS + 1):
-        print(f"Simulation {ii:05} of {ITERS:05} - ", end="")
         modboat_pt = np.array(
             (
                 random.uniform(LIMITS[0], LIMITS[1]),
@@ -126,12 +142,34 @@ def run_simulation_many_single_gyre():
                 0,
             )
         )
-        sim_result = run_simulation(sim_params, modboat_pt, struct_pt)
-        sim_results.append(sim_result)
-        sim_outputs[ii - 1] = [sim_result.success, sim_result.success_time]
-        print(f"convergence: {sim_result.success} in {sim_result.success_time:.2f} s")
+        sim_problems.append(SimulationProblem(sim_params, modboat_pt, struct_pt, ii))
 
-    print(f"Done. Took {time.perf_counter() - time_start:0.2f} s")
+    print("Simulations assembled...")
+
+    print("")
+    print("Running simulations...")
+    time_start = time.perf_counter()
+
+    sim_results = []
+    sim_outputs = np.zeros((ITERS, 2))
+    with Pool() as pool:
+        results = pool.imap(run_simulation, sim_problems)
+
+        for simulation_output, duration in results:
+
+            sim_results.append(simulation_output)
+            sim_outputs[simulation_output.id_number - 1] = [
+                simulation_output.success,
+                simulation_output.success_time,
+            ]
+            print(
+                f"\tSimulation {simulation_output.id_number:03} finished in {duration:5.2f} s. Result: {simulation_output.success}"
+            )
+
+    print(f"Finished in {time.perf_counter() - time_start:0.2f} s")
+
+    print("")
+    print("Saving data to pickle file...")
 
     with open("single_gyre_sim_data.pickle", "wb") as f:
         pickle.dump(sim_results, f)
@@ -139,11 +177,14 @@ def run_simulation_many_single_gyre():
     print("Data pickled.")
 
 
-def run_simulation(
-    sim_params: SimulationParams,
-    initial_modboat_pos: np.ndarray,
-    initial_structure_pos: np.ndarray,
-) -> SimulationOutput:
+def run_simulation(sim_problem: SimulationProblem) -> Tuple[SimulationOutput, float]:
+
+    time_start = time.perf_counter()
+
+    # Pull out input values
+    sim_params = sim_problem.simulation_params
+    initial_modboat_pos = sim_problem.modboat_start_pos
+    initial_structure_pos = sim_problem.struct_start_pos
 
     # Simulation setup
     iters = int(sim_params.total_time_s / sim_params.timestep_s)
@@ -175,7 +216,10 @@ def run_simulation(
             result = True
             break
 
-    return SimulationOutput(boat, strc, flow, result, t)
+    return (
+        SimulationOutput(boat, strc, flow, result, t, sim_problem.id_number),
+        time.perf_counter() - time_start,
+    )
 
 
 def plot_result(sim_out: SimulationOutput, sim_params: SimulationParams) -> None:
