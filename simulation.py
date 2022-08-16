@@ -3,16 +3,21 @@ import random
 import time
 from dataclasses import dataclass
 from functools import partial
-from msilib.schema import Control
 from multiprocessing import Pool
-from typing import Tuple
+from typing import Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 import animate
 from controller import ApproachController, FlowDirection, FlowOrientation
-from flowfield import GyreFlow, double_gyre, rankine_velocity, single_vortex
+from flowfield import (
+    GyreFlow,
+    double_gyre,
+    rankine_velocity,
+    rankine_vortex,
+    single_vortex,
+)
 from swimmer import Swimmer
 
 
@@ -55,27 +60,33 @@ class SimulationOutput:
 
 def main():
 
-    # run_simulation_many_single_gyre()
+    run_simulation_many_rankine_vortex()
 
-    # return
+    return
 
     # Simulation Parameters
-    TOTAL_TIME_S = 300  # [s]
+    TOTAL_TIME_S = 500  # [s]
     TIMESTEP_S = 0.01
     # GYRE_CENTER = np.array((2.5, 2.5))
 
     # Plotting Parameters
-    LIMITS = np.array((-1, 1, -1, 1))
+    LIMITS = np.array((-1.5, 1.5, -1.5, 1.5))
     # LIMITS = np.array((0, 5, 0, 5))
     PLOT_STEP = 0.1
 
     # Flow field parameter
     FLOW_MODEL, FLOW_DIR, FLOW_ORI, FLOW_PARAMS = (
-        single_vortex,
+        rankine_vortex,
         FlowDirection.IN,
         FlowOrientation.CCW,
-        {"Omega": partial(rankine_velocity, Gamma=0.1, a=0.05), "mu": 0.001},
+        {"Gamma": 0.0565, "a": 0.05},
     )
+    # FLOW_MODEL, FLOW_DIR, FLOW_ORI, FLOW_PARAMS = (
+    #     single_vortex,
+    #     FlowDirection.IN,
+    #     FlowOrientation.CCW,
+    #     {"Omega": partial(rankine_velocity, Gamma=0.1, a=0.05), "mu": 0.001},
+    # )
     # FLOW_MODEL, FLOW_DIR, FLOW_ORI, FLOW_PARAMS = (
     #     double_gyre,
     #     FlowDirection.IN,
@@ -88,7 +99,7 @@ def main():
     )
 
     INITIAL_POS_MODBOAT = np.array((0.5, 0.5, 0))
-    INITIAL_POS_STRUCTURE = np.array((0.6, -0.5, 0))
+    INITIAL_POS_STRUCTURE = np.array((-0.4, -0.5, 0))
 
     sim_problem = SimulationProblem(
         sim_params, INITIAL_POS_MODBOAT, INITIAL_POS_STRUCTURE, 0
@@ -98,24 +109,24 @@ def main():
     plot_result(sim_results, sim_params)
 
 
-def run_simulation_many_single_gyre():
+def run_simulation_many_rankine_vortex():
     """Runs many simulations on a single gyre"""
 
     # Simulation Parameters
-    TOTAL_TIME_S = 1000  # [s]
+    TOTAL_TIME_S = 2000  # [s]
     TIMESTEP_S = 0.01
-    ITERS = 500
+    ITERS = 300
 
     # Plotting Parameters
-    LIMITS = np.array((-1, 1, -1, 1))
+    LIMITS = np.array((-1.5, 1.5, -1.5, 1.5))
     PLOT_STEP = 0.1
 
     # Flow field parameter
     FLOW_MODEL, FLOW_DIR, FLOW_ORI, FLOW_PARAMS = (
-        single_vortex,
+        rankine_vortex,
         FlowDirection.IN,
         FlowOrientation.CCW,
-        {"Omega": partial(rankine_velocity, Gamma=0.1, a=0.05), "mu": 0.001},
+        {"Gamma": 0.0565, "a": 0.05},
     )
 
     # Simulation parameters
@@ -153,7 +164,7 @@ def run_simulation_many_single_gyre():
     sim_results = []
     sim_outputs = np.zeros((ITERS, 2))
     with Pool() as pool:
-        results = pool.imap(run_simulation, sim_problems)
+        results = pool.imap_unordered(run_simulation, sim_problems)
 
         for simulation_output, duration in results:
 
@@ -171,8 +182,11 @@ def run_simulation_many_single_gyre():
     print("")
     print("Saving data to pickle file...")
 
-    with open("single_gyre_sim_data.pickle", "wb") as f:
+    with open("rankine_vortex_sim_data.pickle", "wb") as f:
         pickle.dump(sim_results, f)
+
+    with open("rankine_vortex_sim_params.pickle", "wb") as f:
+        pickle.dump(sim_params, f)
 
     print("Data pickled.")
 
@@ -222,7 +236,11 @@ def run_simulation(sim_problem: SimulationProblem) -> Tuple[SimulationOutput, fl
     )
 
 
-def plot_result(sim_out: SimulationOutput, sim_params: SimulationParams) -> None:
+def plot_result(
+    sim_out: SimulationOutput,
+    sim_params: SimulationParams,
+    block: Optional[bool] = True,
+) -> None:
 
     # Plot results
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
@@ -248,7 +266,8 @@ def plot_result(sim_out: SimulationOutput, sim_params: SimulationParams) -> None
     plt.show(block=False)
 
     # animate.animate_simulation(flow, [boat, strc], LIMITS)
-    plt.show()
+    if block:
+        plt.show()
 
 
 if __name__ == "__main__":

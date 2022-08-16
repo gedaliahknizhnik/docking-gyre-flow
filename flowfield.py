@@ -138,6 +138,7 @@ def single_vortex(pts: np.ndarray, Omega: callable, mu: float) -> np.ndarray:
 def rankine_velocity(
     x1s: np.ndarray, x2s: np.ndarray, Gamma: float, a: float
 ) -> np.ndarray:
+    """Rankine velocity field - just omegas"""
 
     rs = np.sqrt(x1s**2 + x2s**2)
 
@@ -146,18 +147,43 @@ def rankine_velocity(
     return omegas
 
 
+def rankine_vortex(pts: np.ndarray, Gamma: float, a: float) -> np.ndarray:
+    """Rankine vortex model - complete"""
+
+    omegas = rankine_velocity(pts[0], pts[1], Gamma, a)
+
+    ths = np.arctan2(pts[1], pts[0])
+
+    dx1s = -omegas * np.sin(ths)
+    dx2s = omegas * np.cos(ths)
+
+    dxs = np.array((dx1s, dx2s, 0 * dx1s))
+
+    return dxs
+
+
 def main():
     f, ax = plt.subplots()
 
-    g = GyreFlow(flow_model=double_gyre, A=1, s=5, mu=0.001)
-    g.plot(0.1, np.array((0, 5, 0, 5)), ax)
-    plt.show()
+    # g = GyreFlow(flow_model=double_gyre, A=1, s=5, mu=0.001)
+    # g.plot(0.1, np.array((0, 5, 0, 5)), ax)
+    # plt.show()
 
-    xs = np.arange(0, 5, 0.1).reshape(-1, 1)
+    # g = GyreFlow(
+    #     flow_model=single_vortex,
+    #     **{"Omega": partial(rankine_velocity, Gamma=0.0565, a=0.05), "mu": 0.000}
+    # )
+    g = GyreFlow(flow_model=rankine_vortex, Gamma=0.0565, a=0.05)
+    g.plot(0.1, np.array((-1.5, 1.5, -1.5, 1.5)), ax)
+    # plt.show()
+
+    xs = np.arange(-1, 1, 0.01).reshape(-1, 1)
     ys = 0 * xs
 
-    dx1s, dx2s = g.flow_func([xs, ys])
+    dx1s, dx2s, dths = g.flow_func([xs, ys])
     vels = np.sqrt(dx1s**2 + dx2s**2)
+
+    print(np.hstack((xs, vels)))
 
     f, ax = plt.subplots()
     plt.plot(xs, vels)

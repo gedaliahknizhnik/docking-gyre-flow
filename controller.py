@@ -23,7 +23,7 @@ class ApproachController:
     """
 
     time_to_convergence = 2  # [s]
-    convergence_threshold = 0.01  # [m]
+    convergence_threshold = 0.05  # [m]
 
     def __init__(
         self,
@@ -35,8 +35,8 @@ class ApproachController:
         """Creates a controller object by storing the flowfield and setting params"""
 
         # Control params
-        self.Kp = 0.5
-        self.vel_from_thrusters = 0.01
+        self.Kp = 0.75
+        self.vel_from_thrusters = 0.08
 
         # Flow model
         self.flow_model = flow_model
