@@ -7,19 +7,24 @@ from mpl_toolkits import mplot3d
 import anglefunctions
 from simulation import SimulationOutput, SimulationParams, plot_result
 
-_FILENAME_DATA = "rankine_vortex_sim_data.pickle"
-_FILENAME_PARAMS = "rankine_vortex_sim_params.pickle"
+_FILENAME_PREFIX = "rankine_vortex_sim"
+_FILENAME_IDENTIFIER = "with_noise"
+_FILENAME_QTY = "100"
 
 
 def main():
 
-    print(f"Reading data from {_FILENAME_DATA}...")
-    with open(_FILENAME_DATA, "rb") as f:
+    text_to_add = f"_{_FILENAME_IDENTIFIER}" if _FILENAME_IDENTIFIER is not None else ""
+    filename_data = f"{_FILENAME_PREFIX}{text_to_add}_{_FILENAME_QTY}_data.pickle"
+    filename_params = f"{_FILENAME_PREFIX}{text_to_add}_{_FILENAME_QTY}_params.pickle"
+
+    print(f"Reading data from {filename_data}...")
+    with open(filename_data, "rb") as f:
         simulations = pickle.load(f)
     print(f"\tData imported.")
 
-    print(f"Reading data from {_FILENAME_PARAMS}...")
-    with open(_FILENAME_PARAMS, "rb") as f:
+    print(f"Reading data from {filename_params}...")
+    with open(filename_params, "rb") as f:
         params = pickle.load(f)
     print(f"\tData imported.")
 
@@ -104,7 +109,7 @@ def main():
     plt.show(block=False)
 
     """Plot failed trajectories"""
-    for failure_ind in failure_inds[: max(10, len(failure_inds))]:
+    for failure_ind in failure_inds[: min(10, len(failure_inds))]:
         plot_result(simulations[failure_ind], params, block=False)
         plt.suptitle(f"Failed simulation {failure_ind}")
 
