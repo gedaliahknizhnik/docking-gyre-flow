@@ -25,10 +25,47 @@ class GyreFlow:
         """
 
         # Pull the center out of the kwargs dictionary
+        #   [x, y]
         self.center = kwargs.pop("center", np.array((0, 0)))
 
+        # Pull the noise parameters out of the kwargs dictionary
+        #   [mu, sigma]
+        self.noise_params = kwargs.pop("noise", np.array((0, 0)))
+
         # All other kwargs go to flow function
-        self.flow_func = partial(flow_model, **kwargs)
+        self.flow_func_before_noise = partial(flow_model, **kwargs)
+
+    def flow_func(self, pts: np.ndarray) -> np.ndarray:
+        """
+        Calls the flow function and adds noise.
+
+        Inputs:
+            pts: numpy array containing the points at which to evaluate.
+                Supports single points, vectors, or meshgrid, assuming that
+                pts[0] contains x1, pts[1] contains x2
+
+        Outputs:
+            dxs: numpy array of same shape as pts containing [dx1, dx2, dtheta]
+                with noise added in
+        """
+
+        dxs = self.flow_func_before_noise(pts)
+        dxs += self.noise(dxs)
+
+        return dxs
+
+    def noise(self, dxs: np.ndarray) -> np.ndarray:
+        """
+        Returns Gaussian noise on the flow parameters
+
+        Inputs:
+            dxs: numpy array containing [dx1, dx2, dtheta]
+
+        Outputs:
+            noise: numpy array of the same shape as dxs to be added to it.
+        """
+
+        return np.random.normal(self.noise_params[0], self.noise_params[1], dxs.shape)
 
     def plot(self, step: float, lims: np.ndarray, ax, *args, **kwargs) -> None:
         """

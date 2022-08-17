@@ -60,7 +60,7 @@ class SimulationOutput:
 
 def main():
 
-    run_simulation_many_rankine_vortex()
+    run_simulation_many_rankine_vortex(output_name="with_noise")
 
     return
 
@@ -79,7 +79,7 @@ def main():
         rankine_vortex,
         FlowDirection.IN,
         FlowOrientation.CCW,
-        {"Gamma": 0.0565, "a": 0.05},
+        {"Gamma": 0.0565, "a": 0.05, "noise": np.array([0, 0.001])},
     )
     # FLOW_MODEL, FLOW_DIR, FLOW_ORI, FLOW_PARAMS = (
     #     single_vortex,
@@ -109,13 +109,13 @@ def main():
     plot_result(sim_results, sim_params)
 
 
-def run_simulation_many_rankine_vortex():
+def run_simulation_many_rankine_vortex(output_name: Optional[str] = None) -> None:
     """Runs many simulations on a single gyre"""
 
     # Simulation Parameters
     TOTAL_TIME_S = 2000  # [s]
     TIMESTEP_S = 0.01
-    ITERS = 300
+    ITERS = 50
 
     # Plotting Parameters
     LIMITS = np.array((-1.5, 1.5, -1.5, 1.5))
@@ -126,7 +126,7 @@ def run_simulation_many_rankine_vortex():
         rankine_vortex,
         FlowDirection.IN,
         FlowOrientation.CCW,
-        {"Gamma": 0.0565, "a": 0.05},
+        {"Gamma": 0.0565, "a": 0.05, "noise": np.array([0, 0.01])},
     )
 
     # Simulation parameters
@@ -182,10 +182,14 @@ def run_simulation_many_rankine_vortex():
     print("")
     print("Saving data to pickle file...")
 
-    with open("rankine_vortex_sim_data.pickle", "wb") as f:
+    file_name_prefix = "rankine_vortex_sim"
+    text_to_add = f"_{output_name}" if output_name is not None else ""
+    file_name = f"{file_name_prefix}{text_to_add}_{ITERS}"
+
+    with open(f"{file_name}_data.pickle", "wb") as f:
         pickle.dump(sim_results, f)
 
-    with open("rankine_vortex_sim_params.pickle", "wb") as f:
+    with open(f"{file_name}_params.pickle", "wb") as f:
         pickle.dump(sim_params, f)
 
     print("Data pickled.")
