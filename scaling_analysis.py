@@ -1,6 +1,10 @@
 import pickle
 
+import matplotlib
 import matplotlib.pyplot as plt
+
+matplotlib.rcParams["text.usetex"] = True
+
 import numpy as np
 from mpl_toolkits import mplot3d
 
@@ -48,13 +52,55 @@ def main():
 
     f, ax = plt.subplots()
 
-    for radius in radii:
+    FBRDs = np.zeros((radii.shape[0], 3))
+    Naives = np.zeros((radii.shape[0], 3))
+
+    for ii in range(radii.shape[0]):
+        # for radius in radii:
+        radius = radii[ii]
+
         inds = np.where(outputs_FBRD[:, 2] * outputs_FBRD[:, 0] == radius)[0]
-        ax.scatter(outputs_FBRD[inds, 2], outputs_FBRD[inds, 3], color="blue")
+        FBRDs[ii] = [
+            radius,
+            np.mean(outputs_FBRD[inds, 3]),
+            np.std(outputs_FBRD[inds, 3]),
+        ]
+
+        # ax.scatter(outputs_FBRD[inds, 2], outputs_FBRD[inds, 3], color="blue")
 
         inds = np.where(outputs_Naive[:, 2] * outputs_Naive[:, 0] == radius)[0]
-        ax.scatter(outputs_Naive[inds, 2], outputs_Naive[inds, 3], color="red")
+        Naives[ii] = [
+            radius,
+            np.mean(outputs_Naive[inds, 3]),
+            np.std(outputs_Naive[inds, 3]),
+        ]
+        # ax.scatter(outputs_Naive[inds, 2], outputs_Naive[inds, 3], color="red")
 
+    plt.rc("text", usetex=True)
+    plt.rc("font", family="serif")
+
+    ax.errorbar(
+        FBRDs[:, 0],
+        FBRDs[:, 1],
+        yerr=FBRDs[:, 2],
+        color="blue",
+        label="FBRD",
+        linewidth=2.0,
+        capsize=2,
+    )
+    ax.errorbar(
+        Naives[:, 0],
+        Naives[:, 1],
+        yerr=Naives[:, 2],
+        color="red",
+        label="Naive",
+        linewidth=2.0,
+        capsize=2,
+    )
+    ax.set_xlabel("Initial Radius [m]")
+    ax.set_ylabel("Cost [m]")
+    ax.legend()
+    ax.grid()
     plt.show()
 
     # """Assemble desired results"""

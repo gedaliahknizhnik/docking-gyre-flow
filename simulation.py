@@ -72,8 +72,8 @@ def main():
     return
 
     # Simulation Parameters
-    TOTAL_TIME_S = 10000  # [s]
-    TIMESTEP_S = 0.01
+    TOTAL_TIME_S = 60000  # [s]
+    TIMESTEP_S = 0.1
     # GYRE_CENTER = np.array((2.5, 2.5))
 
     # Plotting Parameters
@@ -89,6 +89,19 @@ def main():
         {"Gamma": 1.0, "a": 0.05, "noise": np.array([0, 0.001])}
         # {"Gamma": 0.0565, "a": 0.05, "noise": np.array([0, 0.001])},
     )
+
+    RADIUS = 32
+    # I want 18cm/s at the radius the boats are at:
+    GammaVal = 0.18 * (2 * np.pi) * RADIUS
+
+    # Flow field parameter
+    FLOW_MODEL, FLOW_DIR, FLOW_ORI, FLOW_PARAMS = (
+        rankine_vortex,
+        FlowDirection.IN,
+        FlowOrientation.CCW,
+        {"Gamma": GammaVal, "a": 0.05, "noise": np.array([0, 0.00])},
+    )
+
     # FLOW_MODEL, FLOW_DIR, FLOW_ORI, FLOW_PARAMS = (
     #     single_vortex,
     #     FlowDirection.IN,
@@ -106,14 +119,14 @@ def main():
         TOTAL_TIME_S, TIMESTEP_S, FLOW_MODEL, FLOW_DIR, FLOW_ORI, FLOW_PARAMS
     )
 
-    INITIAL_POS_MODBOAT = np.array((0.5, 0.5, 0)) * 2
-    INITIAL_POS_STRUCTURE = np.array((-0.4, -0.5, 0)) * 2
+    INITIAL_POS_MODBOAT = np.array((32, 0, 0))
+    INITIAL_POS_STRUCTURE = np.array((-32, 0, 0))
 
     sim_problem = SimulationProblem(
         sim_params, INITIAL_POS_MODBOAT, INITIAL_POS_STRUCTURE, 0
     )
 
-    sim_results, duration = run_simulation(sim_problem)
+    sim_results, duration, _ = run_simulation(sim_problem)
     print(f"Cost is: {sim_results.control_cost:0.2}")
     plot_result(sim_results, sim_params)
 
@@ -143,7 +156,7 @@ def run_simulation_many_rankine_vortex(output_name: Optional[str] = None) -> Non
         TOTAL_TIME_S, TIMESTEP_S, FLOW_MODEL, FLOW_DIR, FLOW_ORI, FLOW_PARAMS
     )
 
-    # Assemble problems
+    # Assemble problems15
     print("Assembling simulations...")
     sim_problems = []
     random.seed(5)
@@ -210,12 +223,12 @@ def run_simulation_many_rankine_vortex_changing_radius(
     """Runs many simulations on a single gyre"""
 
     # Simulation Parameters
-    TOTAL_TIME_S = 30000  # [s]
+    TOTAL_TIME_S = 200000  # [s]
     TIMESTEP_S = 0.1
-    ITERS = 100
+    ITERS = 50
 
     # Plotting Parameters
-    RADII = np.array((0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0))
+    RADII = np.array((0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0))
     LIMITS = np.array((-1.5, 1.5, -1.5, 1.5))
     PLOT_STEP = 0.1
 
@@ -252,6 +265,22 @@ def run_simulation_many_rankine_vortex_changing_radius(
             struct_th = random.uniform(-np.pi, np.pi)
             struct_pt = np.array(
                 (struct_r * np.cos(struct_th), struct_r * np.sin(struct_th), 0)
+            )
+
+            # I want 18cm/s at the radius the boats are at:
+            GammaVal = 0.18 * (2 * np.pi) * RADIUS
+
+            # Flow field parameter
+            FLOW_MODEL, FLOW_DIR, FLOW_ORI, FLOW_PARAMS = (
+                rankine_vortex,
+                FlowDirection.IN,
+                FlowOrientation.CCW,
+                {"Gamma": GammaVal, "a": 0.05, "noise": np.array([0, 0.00])},
+            )
+
+            # Simulation parameters
+            sim_params = SimulationParams(
+                TOTAL_TIME_S, TIMESTEP_S, FLOW_MODEL, FLOW_DIR, FLOW_ORI, FLOW_PARAMS
             )
 
             sim_problems.append(

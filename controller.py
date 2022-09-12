@@ -24,7 +24,7 @@ class FBRDController:
     """
 
     time_to_convergence = 2  # [s]
-    convergence_threshold = 0.05  # [m]
+    convergence_threshold = 0.075  # [m]
 
     def __init__(
         self,
@@ -97,6 +97,8 @@ class FBRDController:
         )
 
         # Store data
+        self.pos = pos
+        self.targ = targ
         self.r_diff = r_targ - r_mob
         self.theta_diff = err
 
@@ -104,7 +106,8 @@ class FBRDController:
 
     def evaluate_convergence(self) -> bool:
 
-        total_err = np.sqrt(self.r_diff**2 + self.theta_diff**2)
+        total_err = np.linalg.norm(self.pos - self.targ)
+        # total_err = np.sqrt(self.r_diff**2 + self.theta_diff**2)
 
         if total_err <= self.convergence_threshold:
             self.convergence_count += 1
@@ -179,12 +182,15 @@ class NaiveController:
         # Store data
         self.r_diff = r_targ - r_mob
         self.theta_diff = err
+        self.pos = pos
+        self.targ = targ
 
         return control_vel
 
     def evaluate_convergence(self) -> bool:
 
-        total_err = np.sqrt(self.r_diff**2 + self.theta_diff**2)
+        total_err = np.linalg.norm(self.pos - self.targ)
+        # total_err = np.sqrt(self.r_diff**2 + self.theta_diff**2)
 
         if total_err <= self.convergence_threshold:
             self.convergence_count += 1
