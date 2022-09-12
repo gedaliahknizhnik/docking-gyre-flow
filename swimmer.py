@@ -83,6 +83,11 @@ class Swimmer:
 
         traj = self.pose_hist[: self.life + 1, 1:3]
         ax.plot(traj[:, 0], traj[:, 1], *args, **kwargs)
+
+        label = kwargs.pop("label", None)
+        ax.plot(traj[0, 0], traj[0, 1], *args, marker="o", **kwargs)
+        # ax.plot(traj[-1, 0], traj[-1, 1], *args, marker="s", **kwargs)
+
         plt.draw()
 
     def plotPhase(self, ax: plt.Axes, *args, **kwargs) -> None:
@@ -96,14 +101,14 @@ class Swimmer:
         """
 
         flow_model: GyreFlow = kwargs.pop("flow_model")
-        
+
         ts = self.pose_hist[: self.life + 1, 0]
         traj = self.pose_hist[: self.life + 1, 1:3]
         _, phases = flow_model.get_state(traj)
 
         ax.plot(ts, phases, *args, **kwargs)
         plt.draw()
-        
+
     def plotRadii(self, ax: plt.Axes, *args, **kwargs) -> None:
         """
         Plots the radius of the swimmer on the given axes
@@ -115,7 +120,7 @@ class Swimmer:
         """
 
         flow_model: GyreFlow = kwargs.pop("flow_model")
-        
+
         ts = self.pose_hist[: self.life + 1, 0]
         traj = self.pose_hist[: self.life + 1, 1:3]
         rs, _ = flow_model.get_state(traj)

@@ -85,6 +85,14 @@ class GyreFlow:
         x1mesh, x2mesh = np.meshgrid(x1s, x2s)
         dxs = self.flow_func(np.array((x1mesh, x2mesh)))
 
+        # Exclude exclusion region
+        exclusion = kwargs.pop("exclusion_region", 0)
+        for ii in range(len(x1s)):
+            for jj in range(len(x2s)):
+                dist = (x1mesh[ii, jj] ** 2 + x2mesh[ii, jj] ** 2) ** (1 / 2)
+                if dist < exclusion:
+                    dxs[:, ii, jj] = 0
+
         ax.quiver(x1mesh, x2mesh, dxs[0], dxs[1], *args, **kwargs)
         plt.draw()
 
