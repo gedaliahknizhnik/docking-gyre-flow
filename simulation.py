@@ -255,13 +255,13 @@ def run_simulation_many_rankine_vortex_changing_radius(
     r_count = 0
     for RADIUS in RADII:
         for ii in range(1, ITERS + 1):
-            modboat_r = random.uniform(RADIUS - 0.1, RADIUS + 0.1)
+            modboat_r = random.uniform(RADIUS-0.2, RADIUS+0.2)
             modboat_th = random.uniform(-np.pi, np.pi)
             modboat_pt = np.array(
                 (modboat_r * np.cos(modboat_th), modboat_r * np.sin(modboat_th), 0)
             )
 
-            struct_r = random.uniform(RADIUS - 0.1, RADIUS + 0.1)
+            struct_r = random.uniform(RADIUS-0.2, RADIUS+0.2)
             struct_th = random.uniform(-np.pi, np.pi)
             struct_pt = np.array(
                 (struct_r * np.cos(struct_th), struct_r * np.sin(struct_th), 0)
@@ -300,7 +300,7 @@ def run_simulation_many_rankine_vortex_changing_radius(
     # sim_results = []
     sim_outputs = np.zeros((TOTAL_ITERS, 4))
 
-    with Pool() as pool:
+    with Pool(processes=40) as pool:
         results = pool.imap_unordered(run_simulation, sim_problems)
 
         for simulation_output, duration, radius in results:
@@ -375,10 +375,9 @@ def run_simulation(sim_problem: SimulationProblem) -> Tuple[SimulationOutput, fl
         boat.update(t, vel_modboat, vel_control)
         strc.update(t, vel_structure)
 
-        # Sum up the cost as the velocity applied perpendicular to the flow.
+	# Sum up the cost as the distance traveled as a result of the control input.
         new_cost = (
-            np.linalg.norm(vel_control - np.dot(vel_control, vel_modboat) * vel_control)
-            * sim_params.timestep_s
+            np.linalg.norm(vel_control) * sim_params.timestep_s
         )
         control_cost += new_cost
 
