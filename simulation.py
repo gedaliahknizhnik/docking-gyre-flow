@@ -13,8 +13,10 @@ matplotlib.rcParams["text.usetex"] = True
 import numpy as np
 
 import animate
-from controller import FBRDController, FlowDirection, FlowOrientation, NaiveController
+from controller import FBRDController, NaiveController
 from flowfield import (
+    FlowDirection,
+    FlowOrientation,
     GyreFlow,
     double_gyre,
     rankine_velocity,
@@ -63,13 +65,26 @@ class SimulationOutput:
     control_cost: float
 
 
+"""PARAMETERS"""
+
+_CONTROLLER_TO_USE = FBRDController
+_NOISE_LEVEL_M_PER_S = 0.000
+_NUM_ITERS = 50
+_OUTPUT_NAME = "with_noise"
+
+
 def main():
 
-    run_simulation_many_rankine_vortex_changing_radius(
-        output_name="changing_radius_FBRD"
-    )
+    run_simulation_many_rankine_vortex(output_name=_OUTPUT_NAME)
+    # run_simulation_many_rankine_vortex_changing_radius(output_name=_OUTPUT_NAME)
+    # run_simulation_single(output_name=_OUTPUT_NAME)
 
-    return
+
+"""SIMULATIONS"""
+
+
+def run_simulation_single(output_name: Optional[str] = None) -> None:
+    """Runs a single simulation on a single gyre"""
 
     # Simulation Parameters
     TOTAL_TIME_S = 60000  # [s]
@@ -86,8 +101,7 @@ def main():
         rankine_vortex,
         FlowDirection.IN,
         FlowOrientation.CCW,
-        {"Gamma": 1.0, "a": 0.05, "noise": np.array([0, 0.001])}
-        # {"Gamma": 0.0565, "a": 0.05, "noise": np.array([0, 0.001])},
+        {"Gamma": 0.0565, "a": 0.05, "noise": np.array([0, _NOISE_LEVEL_M_PER_S])},
     )
 
     RADIUS = 32
@@ -99,7 +113,7 @@ def main():
         rankine_vortex,
         FlowDirection.IN,
         FlowOrientation.CCW,
-        {"Gamma": GammaVal, "a": 0.05, "noise": np.array([0, 0.00])},
+        {"Gamma": GammaVal, "a": 0.05, "noise": np.array([0, _NOISE_LEVEL_M_PER_S])},
     )
 
     # FLOW_MODEL, FLOW_DIR, FLOW_ORI, FLOW_PARAMS = (
@@ -132,12 +146,15 @@ def main():
 
 
 def run_simulation_many_rankine_vortex(output_name: Optional[str] = None) -> None:
-    """Runs many simulations on a single gyre"""
+    """
+    Runs many simulations on a single gyre, randomly placing the swimmers throughout
+    the space.
+    """
 
     # Simulation Parameters
     TOTAL_TIME_S = 2000  # [s]
-    TIMESTEP_S = 0.1
-    ITERS = 50
+    TIMESTEP_S = 0.01
+    ITERS = _NUM_ITERS
 
     # Plotting Parameters
     LIMITS = np.array((-1.5, 1.5, -1.5, 1.5))
@@ -148,7 +165,7 @@ def run_simulation_many_rankine_vortex(output_name: Optional[str] = None) -> Non
         rankine_vortex,
         FlowDirection.IN,
         FlowOrientation.CCW,
-        {"Gamma": 0.0565, "a": 0.05, "noise": np.array([0, 0.00])},
+        {"Gamma": 0.0565, "a": 0.05, "noise": np.array([0, _NOISE_LEVEL_M_PER_S])},
     )
 
     # Simulation parameters
@@ -188,7 +205,7 @@ def run_simulation_many_rankine_vortex(output_name: Optional[str] = None) -> Non
     with Pool() as pool:
         results = pool.imap_unordered(run_simulation, sim_problems)
 
-        for simulation_output, duration in results:
+        for simulation_output, duration, _ in results:
 
             sim_results.append(simulation_output)
             sim_outputs[simulation_output.id_number - 1] = [
@@ -220,12 +237,15 @@ def run_simulation_many_rankine_vortex(output_name: Optional[str] = None) -> Non
 def run_simulation_many_rankine_vortex_changing_radius(
     output_name: Optional[str] = None,
 ) -> None:
-    """Runs many simulations on a single gyre"""
+    """
+    Runs many simulations on a single gyre with changing spawn radius
+    to evaluate the effect of scaling on the gyre.
+    """
 
     # Simulation Parameters
     TOTAL_TIME_S = 200000  # [s]
     TIMESTEP_S = 0.1
-    ITERS = 50
+    ITERS = _NUM_ITERS
 
     # Plotting Parameters
     RADII = np.array((0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0))
@@ -239,7 +259,7 @@ def run_simulation_many_rankine_vortex_changing_radius(
         rankine_vortex,
         FlowDirection.IN,
         FlowOrientation.CCW,
-        {"Gamma": 1.0, "a": 0.05, "noise": np.array([0, 0.00])},
+        {"Gamma": 1.0, "a": 0.05, "noise": np.array([0, _NOISE_LEVEL_M_PER_S])},
     )
 
     # Simulation parameters
@@ -255,13 +275,13 @@ def run_simulation_many_rankine_vortex_changing_radius(
     r_count = 0
     for RADIUS in RADII:
         for ii in range(1, ITERS + 1):
-            modboat_r = random.uniform(RADIUS-0.2, RADIUS+0.2)
+            modboat_r = random.uniform(RADIUS - 0.2, RADIUS + 0.2)
             modboat_th = random.uniform(-np.pi, np.pi)
             modboat_pt = np.array(
                 (modboat_r * np.cos(modboat_th), modboat_r * np.sin(modboat_th), 0)
             )
 
-            struct_r = random.uniform(RADIUS-0.2, RADIUS+0.2)
+            struct_r = random.uniform(RADIUS - 0.2, RADIUS + 0.2)
             struct_th = random.uniform(-np.pi, np.pi)
             struct_pt = np.array(
                 (struct_r * np.cos(struct_th), struct_r * np.sin(struct_th), 0)
@@ -275,7 +295,11 @@ def run_simulation_many_rankine_vortex_changing_radius(
                 rankine_vortex,
                 FlowDirection.IN,
                 FlowOrientation.CCW,
-                {"Gamma": GammaVal, "a": 0.05, "noise": np.array([0, 0.00])},
+                {
+                    "Gamma": GammaVal,
+                    "a": 0.05,
+                    "noise": np.array([0, _NOISE_LEVEL_M_PER_S]),
+                },
             )
 
             # Simulation parameters
@@ -340,6 +364,7 @@ def run_simulation_many_rankine_vortex_changing_radius(
 
 
 def run_simulation(sim_problem: SimulationProblem) -> Tuple[SimulationOutput, float]:
+    """Implements a single simulation"""
 
     time_start = time.perf_counter()
 
@@ -353,7 +378,7 @@ def run_simulation(sim_problem: SimulationProblem) -> Tuple[SimulationOutput, fl
     boat = Swimmer(initial_modboat_pos, iters)
     strc = Swimmer(initial_structure_pos, iters)
     flow = GyreFlow(flow_model=sim_params.flow_model, **sim_params.flow_params)
-    cont = FBRDController(
+    cont = _CONTROLLER_TO_USE(
         flow, sim_params.flow_ori, sim_params.flow_dir, sim_params.timestep_s
     )
 
@@ -375,10 +400,8 @@ def run_simulation(sim_problem: SimulationProblem) -> Tuple[SimulationOutput, fl
         boat.update(t, vel_modboat, vel_control)
         strc.update(t, vel_structure)
 
-	# Sum up the cost as the distance traveled as a result of the control input.
-        new_cost = (
-            np.linalg.norm(vel_control) * sim_params.timestep_s
-        )
+        # Sum up the cost as the distance traveled as a result of the control input.
+        new_cost = np.linalg.norm(vel_control) * sim_params.timestep_s
         control_cost += new_cost
 
         if cont.evaluate_convergence():
@@ -401,6 +424,14 @@ def plot_result(
     traj_only: Optional[bool] = False,
     exclusion_region: Optional[float] = 0,
 ) -> None:
+    """
+    Plots a single simulation
+
+    INPUTS:
+        traj_only: if True, plots only the trajectory. If false, also plots phase info
+        exclusion_region: float that defines a region around the center of the gyre
+                          inside which flow lines are not plotted.
+    """
 
     plt.rc("text", usetex=True)
     plt.rc("font", family="serif")
