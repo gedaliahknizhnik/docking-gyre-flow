@@ -1,20 +1,11 @@
-from enum import Enum
+""" 
+Defines controllers for Flow-Based Rendezvous and Docking (FBRD) and Naive approach.
+"""
 
 import numpy as np
 
 import anglefunctions
 import flowfield
-import swimmer
-
-
-class FlowDirection(Enum):
-    IN = -1
-    OUT = 1
-
-
-class FlowOrientation(Enum):
-    CW = -1
-    CCW = 1
 
 
 class FBRDController:
@@ -29,8 +20,8 @@ class FBRDController:
     def __init__(
         self,
         flow_model: flowfield.GyreFlow,
-        flow_ori: FlowOrientation,
-        flow_dir: FlowDirection,
+        flow_ori: flowfield.FlowOrientation,
+        flow_dir: flowfield.FlowDirection,
         time_step: float,
     ) -> None:
         """Creates a controller object by storing the flowfield and setting params"""
@@ -128,8 +119,8 @@ class NaiveController:
     def __init__(
         self,
         flow_model: flowfield.GyreFlow,
-        flow_ori: FlowOrientation,
-        flow_dir: FlowDirection,
+        flow_ori: flowfield.FlowOrientation,
+        flow_dir: flowfield.FlowDirection,
         time_step: float,
     ) -> None:
         """Creates a controller object by storing the flowfield and setting params"""

@@ -8,8 +8,8 @@ import anglefunctions
 from simulation import SimulationOutput, SimulationParams, plot_result
 
 _FILENAME_PREFIX = "rankine_vortex_sim"
-_FILENAME_IDENTIFIER = None  # "with_noise"
-_FILENAME_QTY = None  # "100"
+_FILENAME_IDENTIFIER = "for_plots"
+_FILENAME_QTY = "50"
 
 
 def main():
@@ -59,7 +59,7 @@ def main():
         )
 
     """Plot trajectories one by one"""
-    for ind in [12]:  # range(len(simulations)):
+    for ind in range(len(simulations)):
         print(f"Simulation {ind}")
         plot_result(
             simulations[ind], params, block=True, traj_only=True, exclusion_region=0.4

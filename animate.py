@@ -1,3 +1,7 @@
+""" 
+Animates simulations - IN PROGRESS and NOT DONE
+"""
+
 import time
 from typing import List
 

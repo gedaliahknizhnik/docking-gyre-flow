@@ -1,8 +1,23 @@
+from enum import Enum
 from functools import partial
 from typing import Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
+
+
+class FlowDirection(Enum):
+    """Flows have faster flow either INWARD or OUTWARD"""
+
+    IN = -1
+    OUT = 1
+
+
+class FlowOrientation(Enum):
+    """ "Flows move either clockwise or counterclockwise"""
+
+    CW = -1
+    CCW = 1
 
 
 class GyreFlow:
@@ -205,35 +220,3 @@ def rankine_vortex(pts: np.ndarray, Gamma: float, a: float) -> np.ndarray:
     dxs = np.array((dx1s, dx2s, 0 * dx1s))
 
     return dxs
-
-
-def main():
-    f, ax = plt.subplots()
-
-    # g = GyreFlow(flow_model=double_gyre, A=1, s=5, mu=0.001)
-    # g.plot(0.1, np.array((0, 5, 0, 5)), ax)
-    # plt.show()
-
-    # g = GyreFlow(
-    #     flow_model=single_vortex,
-    #     **{"Omega": partial(rankine_velocity, Gamma=0.0565, a=0.05), "mu": 0.000}
-    # )
-    g = GyreFlow(flow_model=rankine_vortex, Gamma=0.0565, a=0.05)
-    g.plot(0.1, np.array((-1.5, 1.5, -1.5, 1.5)), ax)
-    # plt.show()
-
-    xs = np.arange(-1, 1, 0.01).reshape(-1, 1)
-    ys = 0 * xs
-
-    dx1s, dx2s, dths = g.flow_func([xs, ys])
-    vels = np.sqrt(dx1s**2 + dx2s**2)
-
-    print(np.hstack((xs, vels)))
-
-    f, ax = plt.subplots()
-    plt.plot(xs, vels)
-    plt.show()
-
-
-if __name__ == "__main__":
-    main()

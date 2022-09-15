@@ -1,3 +1,7 @@
+"""
+A module that defines Swimmer() objects - point mass particles that exist in a 2D flow.
+"""
+
 from typing import Optional
 
 import matplotlib.pyplot as plt
@@ -127,20 +131,3 @@ class Swimmer:
 
         ax.plot(ts, rs, *args, **kwargs)
         plt.draw()
-
-
-def main():
-
-    f, ax = plt.subplots()
-
-    s = Swimmer(np.array((0, 0, 0)), 10)
-    for i in range(9):
-        s.update(i + 1, np.array((0, 1, 0)))
-
-    s.plot(ax, "r-")
-    plt.show()
-    pass
-
-
-if __name__ == "__main__":
-    main()

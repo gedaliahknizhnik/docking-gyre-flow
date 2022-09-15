@@ -2,8 +2,6 @@ import pickle
 
 import matplotlib
 
-matplotlib.use('qtagg') 
-
 import matplotlib.pyplot as plt
 
 matplotlib.rcParams["text.usetex"] = True
